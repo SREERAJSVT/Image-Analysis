@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Home</title>
+    <!-- Bootstrap CDN -->
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <!-- Webcam.js CDN -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/webcamjs/1.0.26/webcam.min.js"></script>
+    <!-- jQuery CDN -->
+    <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <div class="row">
+            <div class="col-md-12">
+                <h1>Welcome, {{ current_user.username }}</h1>
+                <a href="{{ url_for('logout') }}" class="btn btn-secondary">Logout</a>
+                <hr>
+                <h2>Capture Image</h2>
+                <div id="camera"></div>
+                <button id="capture" class="btn btn-primary">Capture</button>
+                <hr>
+                <h2>Image Analysis</h2>
+                <div id="result"></div>
+            </div>
+        </div>
+    </div>
+    <script>
+        // Configure the camera
+        Webcam.set({
+            width: 320,
+            height: 240,
+            image_format: 'jpeg',
+            jpeg_quality: 90
+        });
+        // Attach the camera to the div
+        Webcam.attach('#camera');
+        // Capture the image when the button is clicked
+        $('#capture').click(function() {
+            Webcam.snap(function(data_uri) {
+                // Send the image to the backend using AJAX
+                $.ajax({
+                    url: '/analyze',
+                    type: 'POST',
+                    data: {image: data_uri},
+                    success: function(data) {
+                        // Display the result on the web page
+                        $('#result').html('<img src="' + data.annotated_image + '" class="img-fluid" alt="Annotated Image">');
+                        $('#result').append('<h3>Report</h3>');
+                        $('#result').append('<p>WBC Count: ' + data.report.wbc_count + '</p>');
+                        $('#result').append('<p>Infected Count: ' + data.report.infected_count + '</p>');
+                        $('#result').append('<p>Percentage Infected: ' + data.report.percentage_infected + '%</p>');
+                    },
+                    error: function(error) {
+                        // Display an error message
+                        $('#result').html('<p class="text-danger">Something went wrong.</p>');
+                    }
+                });
+            });
+        });
+    </script>
+</body>
+</html>
